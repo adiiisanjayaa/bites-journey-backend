@@ -57,7 +57,7 @@ Below is the main structure folder :
 How to run
 
 ```
-create database name : dbBitesJourney
+create database name : db_bites_journey
 ```
 
 ```
