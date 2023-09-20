@@ -27,7 +27,6 @@ async function login(req, res, next) {
     return res.status(404).json(responseError("User not found!"));
   } else {
     console.log(user);
-    console.log(password);
     //Check if encrypted password match
     if (!checkIfUnencryptedPasswordIsValid(user[0].password, password)) {
       return res.status(400).json(responseError("Incorrect password!"));
@@ -35,7 +34,7 @@ async function login(req, res, next) {
 
     //sign JWT, valid for 1 hour
     const token = jwt.sign(
-      { userId: user.id, username: user.username },
+      { uid_users: user[0].uid_users, username: user[0].username },
       JWT_SECRET,
       { expiresIn: "1h" }
     );

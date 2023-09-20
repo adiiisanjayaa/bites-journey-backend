@@ -6,12 +6,13 @@ const helmet = require("helmet");
 // All Feature
 const userRouter = require("./services/user/user.router");
 const authRouter = require("./services/auth/auth.router");
+const articleRouter = require("./services/article/article.router");
 const apiKeyMiddleware = require("./middlewares/api_key_middleware");
 
 const mainApp = express();
 mainApp.use(cors({ origin: "*" }), helmet(), morgan("tiny"));
 mainApp.use(express.json());
-mainApp.use(userRouter, authRouter, apiKeyMiddleware);
+mainApp.use(userRouter, authRouter, articleRouter, apiKeyMiddleware);
 
 //use handle error
 mainApp.use(function (_req, res, _next) {

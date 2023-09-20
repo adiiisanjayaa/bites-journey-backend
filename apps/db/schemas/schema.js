@@ -30,13 +30,7 @@ exports.up = async function (knex) {
     table.string("image");
     table.string("title");
     table.string("content");
-    table
-      .integer("id_category")
-      .references("id_category")
-      .inTable("categories")
-      .notNullable()
-      .onUpdate("CASCADE")
-      .onDelete("CASCADE");
+    table.specificType("id_categories", "integer ARRAY");
     table
       .integer("uid_users")
       .references("uid_users")

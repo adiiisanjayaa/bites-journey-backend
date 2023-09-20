@@ -2,18 +2,18 @@ const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../configs/config");
 const { responseError } = require("../utils/response.helper");
 
-export const verifyUser = (req, res, next) => {
+const verifyUser = (req, res, next) => {
   //Get the jwt token from the head
   const token = req.headers.authorization;
   let jwtPayload;
-  const { username } = req.params;
+  const { uid_users } = req.params;
 
   //Try to validate the token and get data
   try {
     jwtPayload = jwt.verify(token, JWT_SECRET);
-    console.log(username);
-    console.log(jwtPayload.username);
-    if (jwtPayload.username !== username) {
+    console.log(uid_users);
+    console.log("user id from verify: ", jwtPayload.uid_users);
+    if (jwtPayload.uid_users !== uid_users) {
       res.status(403).json(responseError("Forbidden!"));
       return;
     }
@@ -28,4 +28,6 @@ export const verifyUser = (req, res, next) => {
   next();
 };
 
-module.exports = verifyUser;
+module.exports = {
+  verifyUser,
+};
