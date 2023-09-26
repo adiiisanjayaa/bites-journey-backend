@@ -11,7 +11,10 @@ const categoryRouter = require("./services/category/category.router");
 const apiKeyMiddleware = require("./middlewares/api_key_middleware");
 
 const mainApp = express();
+console.log("dir", __dirname);
+mainApp.use("/public", express.static(__dirname + "/uploads/"));
 mainApp.use(cors({ origin: "*" }), helmet(), morgan("tiny"));
+mainApp.use(express.urlencoded({ extended: true }));
 mainApp.use(express.json());
 mainApp.use(
   userRouter,
