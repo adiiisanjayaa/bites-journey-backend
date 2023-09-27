@@ -2,6 +2,7 @@ const { responseError, responseOk } = require("../../utils/response.helper");
 const knex = require("../../db/knex");
 const { JWT_SECRET } = require("../../configs/config");
 const jwt = require("jsonwebtoken");
+const { uploadArticleImageHelper } = require("../../upload_file_helper");
 
 //get articles by username
 async function getArticleByUID(req, res, _next) {
@@ -47,39 +48,57 @@ async function getAllArticle(req, res, _next) {
 }
 
 async function createArticle(req, res, _next) {
-  let { title, content, id_categories } = req.body;
-  if (!(title && content && id_categories)) {
-    return res.status(400).json(responseError("Field cannot be empty!"));
-  }
-
-  let result;
-  let data;
-  try {
-    const token = req.headers.authorization;
-    let jwtPayload;
-    try {
-      console.log(token);
-      jwtPayload = jwt.verify(token, JWT_SECRET);
-      console.log(jwtPayload);
-    } catch (re) {
-      console.log(re);
+  return uploadArticleImageHelper(req, res, async function (err) {
+    if (err) {
+      // A Multer error occurred when uploading.
+      if (err.toString().includes("cannot be empty")) {
+        return res.status(400).json(responseError("All field must be filled"));
+      }
+      if (err.toString().includes("supports")) {
+        return res.status(400).json(responseError("File not support"));
+      }
+      return res.status(400).send(err);
     }
+    if (!req.file) {
+      return res.status(400).json(responseError("All field must be filled"));
+    }
+    console.log(req.file);
+    console.log(req.body);
+    let { title, content, id_categories } = req.body;
+    let result;
+    let data;
+    let filename;
+    filename = req.file.filename;
 
-    data = {
-      title: title,
-      content: content,
-      id_categories: id_categories,
-      uid_users: jwtPayload.uid_users,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
+    try {
+      const token = req.headers.authorization;
+      let jwtPayload;
+      try {
+        console.log(token);
+        jwtPayload = jwt.verify(token, JWT_SECRET);
+        console.log(jwtPayload);
+      } catch (re) {
+        console.log(re);
+      }
+      const arrCategory = id_categories.split(",").map(Number);
 
-    result = await knex("articles").insert(data);
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json(responseError("Failed to create article"));
-  }
-  return res.status(200).json(responseOk("Success", data));
+      data = {
+        title: title,
+        content: content,
+        id_categories: arrCategory,
+        uid_users: jwtPayload.uid_users,
+        image: filename,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      result = await knex("articles").insert(data);
+    } catch (error) {
+      console.log(error);
+      return res.status(400).json(responseError("Failed to create article"));
+    }
+    return res.status(200).json(responseOk("Success", data));
+  });
 }
 
 //update by article

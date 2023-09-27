@@ -1,5 +1,6 @@
 const { responseError, responseOk } = require("../../utils/response.helper");
 const knex = require("../../db/knex");
+const { uploadCategoryImageHelper } = require("../../upload_file_helper");
 
 // get all category
 async function getAllCategory(req, res, _next) {
@@ -18,29 +19,44 @@ async function getAllCategory(req, res, _next) {
   }
 }
 
-async function createCategory(req, res, _next) {
-  let { title, description, image } = req.body;
-  if (!(title && description && image)) {
-    return res.status(400).json(responseError("Field cannot be empty!"));
-  }
+async function createCategory(req, res) {
+  return uploadCategoryImageHelper(req, res, async function (err) {
+    if (err) {
+      // A Multer error occurred when uploading.
+      if (err.toString().includes("cannot be empty")) {
+        return res.status(400).json(responseError("All field must be filled"));
+      }
+      if (err.toString().includes("supports")) {
+        return res.status(400).json(responseError("File not support"));
+      }
 
-  let result;
-  let data;
-  try {
-    data = {
-      title: title,
-      description: description,
-      image: image,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-
-    result = await knex("categories").insert(data);
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json(responseError("Failed to create categories"));
-  }
-  return res.status(200).json(responseOk("Success", data));
+      return res.status(400).send(err);
+    }
+    if (!req.file) {
+      return res.status(400).json(responseError("All field must be filled"));
+    }
+    console.log("filename", req.file);
+    console.log(req.body);
+    let { title, description } = req.body;
+    let result;
+    let data;
+    let filename;
+    filename = req.file.filename;
+    try {
+      data = {
+        title: title,
+        description: description,
+        image: filename,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+      result = await knex("categories").insert(data);
+    } catch (error) {
+      console.log(error);
+      return res.status(400).json(responseError("Failed to create categories"));
+    }
+    return res.status(200).json(responseOk("Success", data));
+  });
 }
 
 //delete by ID
