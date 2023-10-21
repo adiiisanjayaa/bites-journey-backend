@@ -28,6 +28,30 @@ async function getArticleByUID(req, res, _next) {
   }
 }
 
+//get articles by username
+async function getArticleByID(req, res, _next) {
+  const { id } = req.params;
+
+  let data = null;
+  try {
+    console.log(id);
+    data = await knex
+      .from("articles")
+      .join("users", "users.uid_users", "articles.uid_users")
+      .select("articles.*", "users.*")
+      .where("articles.id_article", id);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(responseError("Failed to get articles"));
+  }
+
+  if (data.length == 0) {
+    return res.status(404).json(responseError("Article not found!"));
+  } else {
+    return res.status(200).json(responseOk("Success", data));
+  }
+}
+
 // get all article
 async function getAllArticle(req, res, _next) {
   let data = null;
@@ -95,7 +119,7 @@ async function createArticle(req, res, _next) {
       result = await knex("articles").insert(data);
     } catch (error) {
       console.log(error);
-      return res.status(400).json(responseError("Failed to create article"));
+      return res.status(400).json(responseError("Failed to create article",error));
     }
     return res.status(200).json(responseOk("Success", data));
   });
@@ -169,4 +193,5 @@ module.exports = {
   getAllArticle,
   createArticle,
   deteleByID,
+  getArticleByID
 };
