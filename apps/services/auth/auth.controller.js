@@ -6,6 +6,7 @@ const {
   hashPassword,
   checkIfUnencryptedPasswordIsValid,
 } = require("../../utils/helpers");
+const { loginModel, registeModel, checkUserExist } = require("./auth.model");
 
 //login
 async function login(req, res, next) {
@@ -18,7 +19,7 @@ async function login(req, res, next) {
 
   let user = null;
   try {
-    user = await knex.select().from("users").where("username", username);
+    user = await loginModel(username)
     console.log(user);
   } catch (error) {
     return res.status(500).json(responseError("Failed to login"));
@@ -62,10 +63,7 @@ async function register(req, res, next) {
   let user;
   let dataUser;
   try {
-    let findUser = await knex
-      .select()
-      .from("users")
-      .where("username", username);
+    let findUser = await checkUserExist(username)
     console.log(findUser);
     if (findUser.length > 0) {
       return res.status(400).json(responseError("User already registered"));
@@ -82,7 +80,7 @@ async function register(req, res, next) {
       updated_at: new Date(),
     };
 
-    user = await knex("users").insert(dataUser);
+    user = await registeModel(dataUser)
   } catch (error) {
     console.log(error);
     return res.status(400).json(responseError("Failed to register user"));

@@ -6,7 +6,9 @@ const {
   getArticleByUID,
   getAllArticle,
   createArticle,
-  deteleByID,
+  deletedByID,
+  getArticleByID,
+  updateArticle,
 } = require("./article.controller");
 const { verifyUser } = require("../../middlewares/verify_user");
 
@@ -19,8 +21,9 @@ router.get(`${ARTICLE_PATH_V1}/ping`, (_req, res) => {
 
 router.get(`${ARTICLE_PATH_V1}/`, getAllArticle);
 router.get(`${ARTICLE_PATH_V1}/:uid_users`, getArticleByUID);
+router.get(`${ARTICLE_PATH_V1}/id/:id`, getArticleByID);
 router.post(`${ARTICLE_PATH_V1}/create`, checkJwt, createArticle);
-// router.put(`${USER_PATH_V1}/update/:username`, updateByUsername);
-router.delete(`${ARTICLE_PATH_V1}/delete/:id_article`, deteleByID);
+router.put(`${ARTICLE_PATH_V1}/update/:articleId`, updateArticle);
+router.delete(`${ARTICLE_PATH_V1}/delete/:id_article`, deletedByID);
 
 module.exports = router;

@@ -1,5 +1,7 @@
 const { responseError, responseOk } = require("../../utils/response.helper");
 const knex = require("../../db/knex");
+const { checkUserExist } = require("../auth/auth.model");
+const { getAll ,deteleByUser,getByuser,updateByUser, checkUser} = require("./user.model");
 
 //get user by username
 async function getByUsername(req, res, _next) {
@@ -7,7 +9,7 @@ async function getByUsername(req, res, _next) {
 
   let user = null;
   try {
-    user = await knex.select().from("users").where("username", username);
+    user = await getByuser(username)
   } catch (error) {
     return res.status(500).json(responseError("Failed to get users"));
   }
@@ -24,17 +26,7 @@ async function getByUsername(req, res, _next) {
 async function getAllUser(req, res, _next) {
   let user = null;
   try {
-    user = await knex
-      .select(
-        "uid_users",
-        "name",
-        "username",
-        "phone",
-        "address",
-        "email",
-        "profile_image"
-      )
-      .from("users");
+    user = await getAll()
   } catch (error) {
     console.log(error);
     return res.status(500).json(responseError("Failed to get users"));
@@ -48,8 +40,8 @@ async function getAllUser(req, res, _next) {
 }
 
 //update by username
-async function updateByUsername(req, res, _next) {
-  const { username } = req.params;
+async function updateByID(req, res, _next) {
+  const { id } = req.params;
   const { name, email, phone, address } = req.body;
   if (!(name && email && phone && address)) {
     return res.status(400).json(responseError("Field cannot be empty!"));
@@ -58,10 +50,7 @@ async function updateByUsername(req, res, _next) {
   let user;
   let updatedData;
   try {
-    let findUser = await knex
-      .select()
-      .from("users")
-      .where("username", username);
+    let findUser = await checkUser(id)
     if (findUser == null) {
       return res.status(404).json(responseError("User not found!"));
     }
@@ -72,7 +61,7 @@ async function updateByUsername(req, res, _next) {
       address: address,
       updated_at: new Date(),
     };
-    user = await knex("users").where("username", username).update(updatedData);
+    user = await updateByUser(id,updatedData)
   } catch (error) {
     console.log(error);
     return res.status(400).json(responseError("Failed to update user"));
@@ -86,16 +75,14 @@ async function deteleByUsername(req, res, _next) {
   const { username } = req.params;
   let user;
   try {
-    let exists = await knex.select().from("users").where("username", username);
+    let exists = await checkUserExist(username)
     console.log(exists);
     if (exists.length == 0) {
       return res.status(400).json(responseError("User not found!"));
     }
 
     if (exists[0].username === username) {
-      knex("users")
-        .where("username", username)
-        .del()
+      deteleByUser(username)
         .then(function () {
           return res
             .status(200)
@@ -112,7 +99,7 @@ async function deteleByUsername(req, res, _next) {
 
 module.exports = {
   getByUsername,
-  updateByUsername,
+  updateByID,
   deteleByUsername,
   getAllUser,
 };

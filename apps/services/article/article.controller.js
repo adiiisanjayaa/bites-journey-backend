@@ -1,8 +1,8 @@
 const { responseError, responseOk } = require("../../utils/response.helper");
-const knex = require("../../db/knex");
 const { JWT_SECRET } = require("../../configs/config");
 const jwt = require("jsonwebtoken");
 const { uploadArticleImageHelper } = require("../../upload_file_helper");
+const articleModel = require('./article.model');
 
 //get articles by username
 async function getArticleByUID(req, res, _next) {
@@ -11,11 +11,27 @@ async function getArticleByUID(req, res, _next) {
   let data = null;
   try {
     console.log(uid_users);
-    data = await knex
-      .from("articles")
-      .join("users", "users.uid_users", "articles.uid_users")
-      .select("articles.*", "users.*")
-      .where("articles.uid_users", uid_users);
+    data = await articleModel.getAllArticleByUID(uid_users)
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(responseError("Failed to get articles"));
+  }
+
+  if (data.length == 0) {
+    return res.status(404).json(responseError("Article not found!"));
+  } else {
+    return res.status(200).json(responseOk("Success", data));
+  }
+}
+
+//get articles by username
+async function getArticleByID(req, res, _next) {
+  const { id } = req.params;
+
+  let data = null;
+  try {
+    console.log(id);
+    data = await articleModel.getAllArticleByID(id)
   } catch (error) {
     console.log(error);
     return res.status(500).json(responseError("Failed to get articles"));
@@ -32,11 +48,9 @@ async function getArticleByUID(req, res, _next) {
 async function getAllArticle(req, res, _next) {
   let data = null;
   try {
-    data = await knex
-      .select("id_article", "title", "content", "image")
-      .from("articles");
-  } catch (error) {
-    console.log(error);
+    data = await articleModel.getAllArticle()
+  } catch (errorAlert) {
+    console.log(errorAlert);
     return res.status(500).json(responseError("Failed to get articles"));
   }
 
@@ -92,81 +106,129 @@ async function createArticle(req, res, _next) {
         updated_at: new Date(),
       };
 
-      result = await knex("articles").insert(data);
+      result = await articleModel.createArticle(data)
     } catch (error) {
       console.log(error);
-      return res.status(400).json(responseError("Failed to create article"));
+      return res.status(400).json(responseError("Failed to create article",error));
     }
     return res.status(200).json(responseOk("Success", data));
   });
 }
 
 //update by article
-// async function updateArticle(req, res, _next) {
-//   const { username } = req.params;
-//   const { name, email, phone, address } = req.body;
-//   if (!(name && email && phone && address)) {
-//     return res.status(400).json(responseError("Field cannot be empty!"));
-//   }
+async function updateArticle(req, res, _next) {
+  return uploadArticleImageHelper(req, res, async function (err) {
+    if (err) {
+      // Handle any upload errors here.
+      if (err.toString().includes("cannot be empty")) {
+        return res.status(400).json(responseError("All field must be filled"));
+      }
+      if (err.toString().includes("supports")) {
+        return res.status(400).json(responseError("File not supported"));
+      }
+      return res.status(400).send(err);
+    }
+    
+    // Check if the article ID is provided in the request.
+    const articleId = req.params.articleId; // Assuming you pass the article ID as a parameter.
+    
+    if (!articleId) {
+      return res.status(400).json(responseError("Article ID is required"));
+    }
+    
+    console.log(req.file);
+    console.log(req.body);
+    let { title, content, id_categories } = req.body;
+    let filename = req.file ? req.file.filename : undefined;
 
-//   let user;
-//   let updatedData;
-//   try {
-//     let findUser = await knex
-//       .select()
-//       .from("users")
-//       .where("username", username);
-//     if (findUser == null) {
-//       return res.status(404).json(responseError("User not found!"));
-//     }
-//     updatedData = {
-//       name: name,
-//       email: email,
-//       phone: phone,
-//       address: address,
-//       updated_at: new Date(),
-//     };
-//     user = await knex("users").where("username", username).update(updatedData);
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(400).json(responseError("Failed to update user"));
-//   }
-//   res.clearCookie("accessToken");
-//   return res.status(200).json(responseOk("Success", updatedData));
-// }
+    try {
+      const token = req.headers.authorization;
+      let jwtPayload;
+      try {
+        console.log(token);
+        jwtPayload = jwt.verify(token, JWT_SECRET);
+        console.log(jwtPayload);
+      } catch (re) {
+        console.log(re);
+      }
+      let arrCategory;
+
+    if (id_categories) {
+        arrCategory = id_categories
+        .split(",")
+        .map(Number);
+    } else {
+      // Atur arrCategory ke nilai default atau empty array sesuai kebutuhan Anda.
+      arrCategory = []; // Misalnya, jika id_categories tidak diberikan, kita menganggapnya sebagai array kosong.
+    }
+      // Check if the article with the given ID exists in the database.
+      const existingArticle = await articleModel.getAllArticleByID(articleId)
+
+      if (!existingArticle) {
+        return res.status(404).json(responseError("Article not found"));
+      }
+
+      // If the request data is empty, use the existing data.
+      if (!title) {
+        title = existingArticle.title;
+      }
+      if (!content) {
+        content = existingArticle.content;
+      }
+      if (!arrCategory || arrCategory.length === 0) {
+        arrCategory = existingArticle.id_categories;
+      }
+
+      const data = {
+        title: title,
+        content: content,
+        id_categories: arrCategory,
+        image: filename || existingArticle.image, // Use the existing image if not provided.
+        updated_at: new Date(),
+      };
+
+      // Assuming you have a function to update the article in your database.
+      const result = await articleModel.editArticle(articleId, data);
+      
+      if (result) {
+        return res.status(200).json(responseOk("Article updated successfully", data));
+      } else {
+        return res.status(403).json(responseError("You don't have permission to edit this article"));
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(400).json(responseError("Failed to edit article", error));
+    }
+  });
+}
 
 //delete by ID
-async function deteleByID(req, res, _next) {
+async function deletedByID(req, res, _next) {
   const { id_article } = req.params;
   let data;
   try {
-    let exists = await knex
-      .select()
-      .from("articles")
-      .where("id_article", id_article);
-    console.log(exists);
-    if (exists.length == 0) {
+    let exists = await articleModel.getAllArticleByID(id_article);
+
+    if (exists.length === 0) {
       return res.status(400).json(responseError("Article not found!"));
     }
 
-    knex("articles")
-      .where("id_article", id_article)
-      .del()
-      .then(function () {
-        return res
-          .status(200)
-          .json(
-            responseOk("Success", "Deleted article with ID: " + id_article)
-          );
-      });
+    await articleModel.deleteArticleById(id_article); // Tambahkan await di sini
+
+    return res.status(200).json(
+      responseOk("Success", "Deleted article with ID: " + id_article)
+    );
   } catch (error) {
+    console.error("Failed to delete article:", error);
     return res.status(500).json(responseError("Failed to delete article"));
   }
 }
+
 
 module.exports = {
   getArticleByUID,
   getAllArticle,
   createArticle,
-  deteleByID,
+  getArticleByID,
+  updateArticle,deletedByID
 };
