@@ -1,12 +1,13 @@
 const { responseError, responseOk } = require("../../utils/response.helper");
 const knex = require("../../db/knex");
 const { uploadCategoryImageHelper } = require("../../upload_file_helper");
+const { checkCategoryExist ,createNewCategory,deteleCategoryById,getAll} = require("./category.model");
 
 // get all category
 async function getAllCategory(req, res, _next) {
   let data = null;
   try {
-    data = await knex.select().from("categories");
+    data = await getAll()
   } catch (error) {
     console.log(error);
     return res.status(500).json(responseError("Failed to get category"));
@@ -50,7 +51,7 @@ async function createCategory(req, res) {
         created_at: new Date(),
         updated_at: new Date(),
       };
-      result = await knex("categories").insert(data);
+      result = await createNewCategory(data)
     } catch (error) {
       console.log(error);
       return res.status(400).json(responseError("Failed to create categories"));
@@ -63,18 +64,13 @@ async function createCategory(req, res) {
 async function deteleByID(req, res, _next) {
   const { id_category } = req.params;
   try {
-    let exists = await knex
-      .select()
-      .from("categories")
-      .where("id_category", id_category);
+    let exists = await checkCategoryExist(id_category)
     console.log(exists);
     if (exists.length == 0) {
       return res.status(400).json(responseError("Category not found!"));
     }
 
-    knex("categories")
-      .where("id_category", id_category)
-      .del()
+   deteleCategoryById(id_category)
       .then(function () {
         return res
           .status(200)

@@ -7,6 +7,7 @@ const {
   updateByUsername,
   deteleByUsername,
   getAllUser,
+  updateByID,
 } = require("./user.controller");
 
 // USER PATH
@@ -18,7 +19,7 @@ router.get(`${USER_PATH_V1}/ping`, (_req, res) => {
 
 router.get(`${USER_PATH_V1}/`, checkJwt, getAllUser);
 router.get(`${USER_PATH_V1}/:username`, checkJwt, getByUsername);
-router.put(`${USER_PATH_V1}/update/:username`, updateByUsername);
+router.put(`${USER_PATH_V1}/update/:id`, updateByID);
 router.delete(`${USER_PATH_V1}/delete/:username`, deteleByUsername);
 
 module.exports = router;
