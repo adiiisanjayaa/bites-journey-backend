@@ -1,13 +1,7 @@
 module.exports = {
   development: {
     client: "pg",
-    connection: {
-      database: process.env.DATABASE_NAME || "db_bites_journey",
-      user: process.env.POSTGRES_USER || "postgres",
-      password: process.env.POSTGRES_USER_PW || "root",
-      port: process.env.POSTGRES_PORT || 5432,
-      host: process.env.POSTGRES_HOST || "localhost",
-    },
+    connection: 'postgres://navqsllu:1cN4Uf98CwD8q81NYK94QkJuNVQGV3Z-@rosie.db.elephantsql.com/navqsllu' ,
     migrations: {
       directory: "./apps/db/migrations",
     },
@@ -17,7 +11,7 @@ module.exports = {
   },
   production: {
     client: "pg",
-    connection: process.env.DATABASE_URL,
+    connection: 'postgres://navqsllu:1cN4Uf98CwD8q81NYK94QkJuNVQGV3Z-@rosie.db.elephantsql.com/navqsllu',
     migrations: {
       directory: "./apps/db/migrations",
     },
