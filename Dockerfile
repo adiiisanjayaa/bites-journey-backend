@@ -1,8 +1,7 @@
 # Gunakan image Node.js LTS sebagai base image
-ARG NODE_VERSION=18.16.1
-FROM node:${NODE_VERSION}-slim as baseARG NODE_VERSION=18.16.1
+ARG NODE_VERSION=14
 FROM node:${NODE_VERSION}-slim as base
-LABEL fly_launch_runtime="Node.js"
+
 # Set the working directory dalam container
 WORKDIR /app
 
@@ -15,9 +14,8 @@ RUN npm install
 # Salin seluruh kode aplikasi Anda ke dalam container
 COPY . .
 
-# Expose port yang akan digunakan oleh aplikasi Express
+# Expose port yang akan digunakan oleh aplikasi Express (sesuai dengan konfigurasi aplikasi Anda)
 EXPOSE 9000
 
 # Perintah untuk menjalankan aplikasi saat container dijalankan
-CMD [ "npm", "start" ]
-
+CMD ["npm", "start"]
