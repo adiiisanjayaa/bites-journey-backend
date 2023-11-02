@@ -1,6 +1,8 @@
 # Gunakan image Node.js LTS sebagai base image
-FROM node:lts
-
+ARG NODE_VERSION=18.16.1
+FROM node:${NODE_VERSION}-slim as baseARG NODE_VERSION=18.16.1
+FROM node:${NODE_VERSION}-slim as base
+LABEL fly_launch_runtime="Node.js"
 # Set the working directory dalam container
 WORKDIR /app
 
