@@ -69,3 +69,9 @@ npm run dev
 ```
 
 POSTMAN: https://www.postman.com/restless-sunset-139594/workspace/public-workspace/collection/16505254-8ab74eec-5a17-481d-b628-c67f00d4e91b?action=share&creator=16505254
+
+
+deploy :
+
+
+https://documenter.getpostman.com/view/29068631/2s9YXe6PaC
